@@ -1,0 +1,72 @@
+name: Conditional Deployment Workflow
+
+# Requirement 53 & Path Filters
+on:
+  push:
+    branches:
+      - main
+    # By specifying exactly what triggers it, we inherently ignore README, docs, etc.
+    paths:
+      - 'config.py'
+      - 'templates/**'
+      - 'static/**'
+      - 'app.py'
+      - 'Dockerfile'
+      - 'requirements.txt'
+      - 'docker-compose.yml'
+
+jobs:
+  # Requirement 55: Staging Deployment
+  deploy-staging:
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        
+      - name: Simulate Staging Deployment
+        run: |
+          echo "Simulating deployment to staging server..."
+          echo "ENVIRONMENT=staging"
+          echo "Running Docker image with tag: staging"
+          
+      - name: Generate Job Summary
+        run: |
+          echo "### 🚀 Staging Deployment Successful" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment:** Staging" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit SHA:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          
+      # Requirement 57: Notification Step
+      - name: Send Notification
+        run: echo "Slack notification: Deployment to staging successful"
+
+  # Requirement 56: Production Deployment
+  deploy-production:
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    environment: production # This triggers the manual approval rule we set up!
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        
+      - name: Simulate Production Deployment
+        run: |
+          echo "Deploying to production environment..."
+          echo "ENVIRONMENT=production"
+          echo "Running Docker image with tag: production"
+          
+      - name: Get Current Date for Version
+        id: date
+        run: echo "date=$(date +'%Y.%m.%d')" >> $GITHUB_OUTPUT
+        
+      - name: Create GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "v${{ steps.date.outputs.date }}-${{ github.run_number }}" \
+            --title "Production Release v${{ steps.date.outputs.date }}-${{ github.run_number }}" \
+            --notes "Automated deployment to production from CI/CD pipeline."
+            
+      # Requirement 57: Notification Step
+      - name: Send Notification
+        run: echo "Slack notification: Deployment to production successful"
