@@ -35,7 +35,8 @@ jobs:
           echo "- **Commit SHA:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           
       - name: Send Notification
-        run: echo "Slack notification: Deployment to staging successful"
+        run: |
+          echo "Slack notification: Deployment to staging successful"
 
   deploy-production:
     runs-on: ubuntu-latest
@@ -53,7 +54,8 @@ jobs:
           
       - name: Get Current Date for Version
         id: date
-        run: echo "date=$(date +'%Y.%m.%d')" >> $GITHUB_OUTPUT
+        run: |
+          echo "date=$(date +'%Y.%m.%d')" >> $GITHUB_OUTPUT
         
       - name: Create GitHub Release
         env:
@@ -64,4 +66,5 @@ jobs:
             --notes "Automated deployment to production from CI/CD pipeline."
             
       - name: Send Notification
-        run: echo "Slack notification: Deployment to production successful"
+        run: |
+          echo "Slack notification: Deployment to production successful"
